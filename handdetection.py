@@ -1,4 +1,6 @@
 import sys
+import time
+
 import cv2
 import threading
 
@@ -13,6 +15,7 @@ class TensorflowDetector(object):
     MODEL_NAME = ''
     PATH_TO_LABELS = ''
     PATH_TO_MODEL = 'frozen_inference_graph.pb'
+    __lock = threading.RLock()
 
     def __init__(self, **kwargs):
         self.graph_path = kwargs.pop('graph_path', self.PATH_TO_MODEL)
@@ -20,6 +23,7 @@ class TensorflowDetector(object):
         self.width = kwargs.pop('width', 1280)
         self.height = kwargs.pop('height', 720)
         self.score_thresh = kwargs.pop('score_thresh', 0.8)
+        self.delta = 0.06
 
         self.detection_graph = tf.Graph()
         self.img_queue = Queue()
@@ -73,11 +77,14 @@ class TensorflowDetector(object):
 
             self.img_queue.put(frame)
 
-            sleep(0.1)
+            with self.__lock:
+                delta = self.delta
+            sleep(delta)
 
     def draw_box(self, img, boxes, scores, classes, num):
         height = img.shape[0]
         width = img.shape[1]
+
         for i, score in enumerate(scores):
             if score > self.score_thresh:
                 print(score, classes[i])
@@ -95,9 +102,12 @@ class TensorflowDetector(object):
         cv2.namedWindow('Stream')
 
         while not self.stopped:
-            img = self.output_q.get()
+            if not self.output_q.empty():
+                img = self.output_q.get()[0]
+            else:
+                continue
 
-            frame = cv2.cvtColor(img[0], cv2.COLOR_RGB2BGR)
+            frame = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             frame = cv2.flip(frame, 1)
 
             cv2.imshow('Stream', frame)
@@ -106,11 +116,13 @@ class TensorflowDetector(object):
     def worker(self):
         while not self.stopped:
             if not self.img_queue.empty():
+                start = time.monotonic()
                 img = self.img_queue.get()
                 boxes, scores, classes, num = self.get_classification(img)
                 img = self.draw_box(img,  boxes, scores, classes, num)
                 self.output_q.put((img, boxes, scores))
-
+                with self.__lock:
+                    self.delta = (self.delta + (time.monotonic() - start))/2
         self.sess.close()
 
     def start(self):
