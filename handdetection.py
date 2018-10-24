@@ -23,7 +23,6 @@ class TensorflowDetector(object):
         self.width = kwargs.pop('width', 1280)
         self.height = kwargs.pop('height', 720)
         self.score_thresh = kwargs.pop('score_thresh', 0.8)
-        self.delta = 0.06
 
         self.detection_graph = tf.Graph()
         self.img_queue = Queue()
@@ -62,7 +61,7 @@ class TensorflowDetector(object):
             [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
             feed_dict={self.image_tensor: img_expanded})
 
-        return np.squeeze(boxes), np.squeeze(scores), np.squeeze(classes), np.squeeze(num)
+        return np.squeeze(boxes), np.squeeze(scores), np.squeeze(classes)
 
     def load_label_map(self):
         pass
@@ -75,13 +74,10 @@ class TensorflowDetector(object):
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            self.img_queue.put(frame)
+            if self.img_queue.qsize() <= 1:
+                self.img_queue.put(frame)
 
-            with self.__lock:
-                delta = self.delta
-            sleep(delta)
-
-    def draw_box(self, img, boxes, scores, classes, num):
+    def draw_box(self, img, boxes, scores, classes):
         height = img.shape[0]
         width = img.shape[1]
 
@@ -118,11 +114,9 @@ class TensorflowDetector(object):
             if not self.img_queue.empty():
                 start = time.monotonic()
                 img = self.img_queue.get()
-                boxes, scores, classes, num = self.get_classification(img)
-                img = self.draw_box(img,  boxes, scores, classes, num)
+                boxes, scores, classes = self.get_classification(img)
+                img = self.draw_box(img,  boxes, scores, classes)
                 self.output_q.put((img, boxes, scores))
-                with self.__lock:
-                    self.delta = (self.delta + (time.monotonic() - start))/2
         self.sess.close()
 
     def start(self):
