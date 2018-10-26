@@ -16,9 +16,9 @@
   <widget class="QLineEdit" name="command1">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>64</y>
-     <width>150</width>
+     <x>60</x>
+     <y>54</y>
+     <width>170</width>
      <height>25</height>
     </rect>
    </property>
@@ -26,9 +26,9 @@
   <widget class="QLineEdit" name="command2">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>64</y>
-     <width>150</width>
+     <x>300</x>
+     <y>54</y>
+     <width>170</width>
      <height>25</height>
     </rect>
    </property>
@@ -36,9 +36,9 @@
   <widget class="QLineEdit" name="command3">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>119</y>
-     <width>150</width>
+     <x>60</x>
+     <y>109</y>
+     <width>170</width>
      <height>25</height>
     </rect>
    </property>
@@ -46,8 +46,8 @@
   <widget class="QLabel" name="img1">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>34</y>
+     <x>-10</x>
+     <y>27</y>
      <width>81</width>
      <height>51</height>
     </rect>
@@ -62,8 +62,8 @@
   <widget class="QLabel" name="img1_2">
    <property name="geometry">
     <rect>
-     <x>220</x>
-     <y>34</y>
+     <x>230</x>
+     <y>27</y>
      <width>81</width>
      <height>51</height>
     </rect>
@@ -78,8 +78,8 @@
   <widget class="QLabel" name="img1_3">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>94</y>
+     <x>-10</x>
+     <y>84</y>
      <width>81</width>
      <height>50</height>
     </rect>
@@ -94,8 +94,8 @@
   <widget class="QLabel" name="img1_4">
    <property name="geometry">
     <rect>
-     <x>220</x>
-     <y>94</y>
+     <x>230</x>
+     <y>84</y>
      <width>81</width>
      <height>50</height>
     </rect>
@@ -110,9 +110,9 @@
   <widget class="QLineEdit" name="command5">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>120</y>
-     <width>150</width>
+     <x>300</x>
+     <y>110</y>
+     <width>170</width>
      <height>25</height>
     </rect>
    </property>
@@ -121,9 +121,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>170</y>
-     <width>451</width>
-     <height>131</height>
+     <y>180</y>
+     <width>461</width>
+     <height>121</height>
     </rect>
    </property>
    <property name="title">
@@ -139,14 +139,14 @@
      </rect>
     </property>
     <property name="text">
-     <string>'Minimize to Tray'</string>
+     <string>Minimize to tray</string>
     </property>
    </widget>
    <widget class="QCheckBox" name="mouse">
     <property name="geometry">
      <rect>
-      <x>230</x>
-      <y>30</y>
+      <x>10</x>
+      <y>90</y>
       <width>130</width>
       <height>23</height>
      </rect>
@@ -159,7 +159,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>80</y>
+      <y>60</y>
       <width>130</width>
       <height>23</height>
      </rect>
@@ -168,12 +168,25 @@
      <string>Capture stream</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="save_button">
+    <property name="geometry">
+     <rect>
+      <x>360</x>
+      <y>90</y>
+      <width>89</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QLabel" name="cmmandlabel1">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>40</y>
+     <x>60</x>
+     <y>30</y>
      <width>81</width>
      <height>17</height>
     </rect>
@@ -185,8 +198,8 @@
   <widget class="QLabel" name="cmmandlabel1_2">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>100</y>
+     <x>60</x>
+     <y>90</y>
      <width>81</width>
      <height>17</height>
     </rect>
@@ -198,8 +211,8 @@
   <widget class="QLabel" name="cmmandlabel1_3">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>40</y>
+     <x>300</x>
+     <y>30</y>
      <width>81</width>
      <height>17</height>
     </rect>
@@ -211,8 +224,8 @@
   <widget class="QLabel" name="cmmandlabel1_4">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>100</y>
+     <x>300</x>
+     <y>90</y>
      <width>81</width>
      <height>17</height>
     </rect>
