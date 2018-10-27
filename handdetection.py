@@ -22,7 +22,8 @@ class TensorflowDetector(object):
         self.src = kwargs.pop('src', 0)
         self.width = kwargs.pop('width', 1280)
         self.height = kwargs.pop('height', 720)
-        self.score_thresh = kwargs.pop('score_thresh', 0.8)
+        self.score_thresh = kwargs.pop('score_thresh', 0.9)
+        self.standalone = kwargs.get('standalone', True)
 
         self.detection_graph = tf.Graph()
         self.img_queue = Queue()
@@ -32,8 +33,8 @@ class TensorflowDetector(object):
         self.started = False
 
         self.stream = cv2.VideoCapture(self.src)
-        codec = 1196444237.0  # MJPG
 
+        codec = 1196444237.0  # MJPG
         self.stream.set(cv2.CAP_PROP_FOURCC, codec)
         self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
@@ -112,7 +113,6 @@ class TensorflowDetector(object):
     def worker(self):
         while not self.stopped:
             if not self.img_queue.empty():
-                start = time.monotonic()
                 img = self.img_queue.get()
                 boxes, scores, classes = self.get_classification(img)
                 img = self.draw_box(img,  boxes, scores, classes)
@@ -132,6 +132,8 @@ class TensorflowDetector(object):
                 count -= 1
 
             th2 = threading.Thread(name='stream_reader', target=self.stream_reader)
+
+
             th3 = threading.Thread(name='img_show', target=self.plot)
 
             th1.daemon = True
