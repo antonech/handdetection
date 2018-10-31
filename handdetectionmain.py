@@ -7,6 +7,7 @@ class HandDetectionMain(object):
 
     def __init__(self, app):
         self.tensor = TensorflowDetector(standalone=False)
+        self.tensor.trigger.connect(self.execute)
         self.app = app
 
         mw = QMainWindow()
@@ -63,6 +64,9 @@ class HandDetectionMain(object):
                 QSystemTrayIcon.Information,
                 2000
             )
+
+    def execute(self):
+        pass
 
     def start(self):
         self.tensor.start()

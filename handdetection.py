@@ -1,5 +1,4 @@
 import sys
-import time
 
 import cv2
 import threading
@@ -9,15 +8,21 @@ import numpy as np
 from time import sleep
 from queue import Queue
 
+from PyQt5.QtCore import QObject, pyqtSignal
 
-class TensorflowDetector(object):
+
+class TensorflowDetector(QObject):
 
     MODEL_NAME = ''
     PATH_TO_LABELS = ''
     PATH_TO_MODEL = 'frozen_inference_graph.pb'
     __lock = threading.RLock()
 
+    trigger = pyqtSignal()
+
     def __init__(self, **kwargs):
+        super(TensorflowDetector, self).__init__()
+
         self.graph_path = kwargs.pop('graph_path', self.PATH_TO_MODEL)
         self.src = kwargs.pop('src', 0)
         self.width = kwargs.pop('width', 1280)
@@ -26,11 +31,23 @@ class TensorflowDetector(object):
         self.standalone = kwargs.get('standalone', True)
 
         self.detection_graph = tf.Graph()
+
+        self.threads = []
         self.img_queue = Queue()
         self.output_q = Queue()
 
         self.stopped = True
         self.started = False
+
+        th1 = threading.Thread(name='worker', target=self.worker)
+        self.threads.append(th1)
+
+        th2 = threading.Thread(name='stream_reader', target=self.stream_reader)
+        self.threads.append(th2)
+
+        if self.standalone:
+            th3 = threading.Thread(name='img_show', target=self.plot)
+            self.threads.append(th3)
 
         self.stream = cv2.VideoCapture(self.src)
 
@@ -117,41 +134,27 @@ class TensorflowDetector(object):
                 boxes, scores, classes = self.get_classification(img)
                 img = self.draw_box(img,  boxes, scores, classes)
                 self.output_q.put((img, boxes, scores))
+                self.trigger.emit()
         self.sess.close()
 
     def start(self):
 
-        if not self.started:
-            self.stopped = False
-            th1 = threading.Thread(name='worker', target=self.worker)
-            count = 5
-            while count > 0:
-                sleep(1)
-                print('.', end='')
-                sys.stdout.flush()
-                count -= 1
+        if self.started:
+            return
 
-            th2 = threading.Thread(name='stream_reader', target=self.stream_reader)
+        self.stopped = False
 
+        for th in self.threads:
+            th.daemon = True
+            th.start()
 
-            th3 = threading.Thread(name='img_show', target=self.plot)
+        self.started = True
 
-            th1.daemon = True
-            th1.start()
-            th2.daemon = True
-            th2.start()
-
-            th3.daemon = True
-            th3.start()
-
-            self.started = True
-
-            try:
-                th1.join()
-                th2.join()
-                th3.join()
-            except KeyboardInterrupt:
-                self.stop()
+        try:
+            for th in self.threads:
+                th.join()
+        except KeyboardInterrupt:
+            self.stop()
 
     def stop(self):
         self.stopped = True
