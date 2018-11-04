@@ -1,4 +1,6 @@
-from handdetection import  TensorflowDetector
+import threading
+
+from handdetection import  TensorflowDetector, output_q
 from PyQt5.QtWidgets import QMainWindow, QSystemTrayIcon, QStyle, QAction, QMenu
 from tray import Ui_HandDetection
 
@@ -6,8 +8,12 @@ from tray import Ui_HandDetection
 class HandDetectionMain(object):
 
     def __init__(self, app):
+        super(HandDetectionMain, self).__init__()
+
         self.tensor = TensorflowDetector(standalone=False)
-        self.tensor.trigger.connect(self.execute)
+        self.executor = threading.Thread(name='executor', target=self.execute)
+        self.started = False
+        self.stopped = False
         self.app = app
 
         mw = QMainWindow()
@@ -64,9 +70,38 @@ class HandDetectionMain(object):
                 QSystemTrayIcon.Information,
                 2000
             )
+        else:
+            self.stop()
 
     def execute(self):
-        pass
+        while self.started:
+            if output_q.qsize():
+                _, boxes, scores, classes = output_q.get()
+                for i, score in enumerate(scores):
+                    if score > self.tensor.score_thresh:
+                        print(score, classes[i])
 
     def start(self):
+        if self.started:
+            return
+
+        self.started = True
         self.tensor.start()
+        self.executor.start()
+
+    def stop(self):
+
+        if not self.started:
+            return
+
+        self.tensor.stop()
+        self.started = False
+
+        self.executor.join()
+
+    def join(self):
+        try:
+            self.tensor.join()
+            self.executor.join()
+        except KeyboardInterrupt:
+            self.stop()

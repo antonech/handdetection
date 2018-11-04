@@ -1,27 +1,24 @@
-import sys
-
 import cv2
 import threading
-
+import signal
 import tensorflow as tf
 import numpy as np
-from time import sleep
 from queue import Queue
 
-from PyQt5.QtCore import QObject, pyqtSignal
+img_queue = Queue()
+output_q = Queue()
 
 
-class TensorflowDetector(QObject):
+class TensorflowDetector(object):
 
     MODEL_NAME = ''
     PATH_TO_LABELS = ''
     PATH_TO_MODEL = 'frozen_inference_graph.pb'
     __lock = threading.RLock()
 
-    trigger = pyqtSignal()
-
     def __init__(self, **kwargs):
-        super(TensorflowDetector, self).__init__()
+        self.img_queue = kwargs.pop('img_queue', img_queue)
+        self.output_q = kwargs.pop('output_q', output_q)
 
         self.graph_path = kwargs.pop('graph_path', self.PATH_TO_MODEL)
         self.src = kwargs.pop('src', 0)
@@ -33,10 +30,7 @@ class TensorflowDetector(QObject):
         self.detection_graph = tf.Graph()
 
         self.threads = []
-        self.img_queue = Queue()
-        self.output_q = Queue()
 
-        self.stopped = True
         self.started = False
 
         th1 = threading.Thread(name='worker', target=self.worker)
@@ -85,9 +79,8 @@ class TensorflowDetector(QObject):
         pass
 
     def stream_reader(self):
-        while not self.stopped:
-            # otherwise, read the next frame from the stream
 
+        while self.started:
             grabbed, frame = self.stream.read()
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -115,8 +108,8 @@ class TensorflowDetector(QObject):
         cv2.startWindowThread()
         cv2.namedWindow('Stream')
 
-        while not self.stopped:
-            if not self.output_q.empty():
+        while self.started:
+            if self.output_q.qsize():
                 img = self.output_q.get()[0]
             else:
                 continue
@@ -125,16 +118,19 @@ class TensorflowDetector(QObject):
             frame = cv2.flip(frame, 1)
 
             cv2.imshow('Stream', frame)
+            self.output_q.task_done()
+
             cv2.waitKey(1)
 
     def worker(self):
-        while not self.stopped:
-            if not self.img_queue.empty():
+        while self.started:
+            if self.img_queue.qsize():
                 img = self.img_queue.get()
                 boxes, scores, classes = self.get_classification(img)
-                img = self.draw_box(img,  boxes, scores, classes)
-                self.output_q.put((img, boxes, scores))
-                self.trigger.emit()
+                if self.standalone:
+                    img = self.draw_box(img,  boxes, scores, classes)
+                self.output_q.put((img, boxes, scores, classes))
+
         self.sess.close()
 
     def start(self):
@@ -142,25 +138,30 @@ class TensorflowDetector(QObject):
         if self.started:
             return
 
-        self.stopped = False
+        self.started = True
 
         for th in self.threads:
             th.daemon = True
             th.start()
 
-        self.started = True
+        if self.standalone:
+            try:
+                signal.pause()
+            except KeyboardInterrupt:
+                self.stop()
 
-        try:
-            for th in self.threads:
-                th.join()
-        except KeyboardInterrupt:
-            self.stop()
+    def join(self):
+        for th in self.threads:
+            th.join()
 
     def stop(self):
-        self.stopped = True
         self.started = False
+        self.join()
 
 
 if __name__ == '__main__':
     tfd = TensorflowDetector(score_thresh=0.9)
     tfd.start()
+    tfd.join()
+    print('exit')
+
