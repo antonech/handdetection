@@ -59,7 +59,7 @@
     <string/>
    </property>
   </widget>
-  <widget class="QLabel" name="img1_2">
+  <widget class="QLabel" name="img2">
    <property name="geometry">
     <rect>
      <x>230</x>
@@ -75,7 +75,7 @@
     <string/>
    </property>
   </widget>
-  <widget class="QLabel" name="img1_3">
+  <widget class="QLabel" name="img3">
    <property name="geometry">
     <rect>
      <x>-10</x>
@@ -91,7 +91,7 @@
     <string/>
    </property>
   </widget>
-  <widget class="QLabel" name="img1_4">
+  <widget class="QLabel" name="img4">
    <property name="geometry">
     <rect>
      <x>230</x>
@@ -195,7 +195,7 @@
     <string>Command:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="cmmandlabel1_2">
+  <widget class="QLabel" name="cmmandlabel2">
    <property name="geometry">
     <rect>
      <x>60</x>
@@ -208,7 +208,7 @@
     <string>Command:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="cmmandlabel1_3">
+  <widget class="QLabel" name="cmmandlabel3">
    <property name="geometry">
     <rect>
      <x>300</x>
@@ -221,7 +221,7 @@
     <string>Command:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="cmmandlabel1_4">
+  <widget class="QLabel" name="cmmandlabel4">
    <property name="geometry">
     <rect>
      <x>300</x>

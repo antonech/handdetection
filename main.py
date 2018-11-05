@@ -5,8 +5,8 @@ from handdetectionmain import HandDetectionMain
 
 def main():
     app = QApplication(sys.argv)
+
     handdetection = HandDetectionMain(app)
-    handdetection.show()
     handdetection.start()
     app.exec()
     handdetection.join()
