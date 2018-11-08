@@ -9,7 +9,6 @@ def main():
     handdetection = HandDetectionMain(app)
     handdetection.start()
     app.exec()
-    handdetection.join()
 
 
 if __name__ == "__main__":

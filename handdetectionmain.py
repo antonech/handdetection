@@ -1,6 +1,5 @@
 import threading
 
-from configparser import ConfigParser
 from os.path import isfile
 
 from PyQt5.QtCore import pyqtSlot, QObject
@@ -14,10 +13,11 @@ class HandDetection(QMainWindow, Ui_HandDetection):
 
     CONFIG_FILE = 'detection.ini'
 
-    def __init__(self, app):
+    def __init__(self, app, **kwargs):
         super(HandDetection, self).__init__()
         self.setupUi(self)
-
+        self.stop = kwargs.get('stop_fn', lambda: None)
+        self.config = kwargs.get('config', ConfigParser())
         icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
         self.setWindowIcon(icon)
 
@@ -48,28 +48,6 @@ class HandDetection(QMainWindow, Ui_HandDetection):
         self.app = app
         self.save_button.clicked.connect(self.save_config)
 
-        self.config = ConfigParser()
-
-        self.init_config()
-
-    def init_config(self):
-
-        if isfile(self.CONFIG_FILE):
-            with open(self.CONFIG_FILE) as cfg:
-                self.config.read_file(cfg)
-
-        if 'COMMANDS' in self.config.sections():
-            commands = self.config['COMMANDS']
-            command1 = commands.get('command1', '')
-            command2 = commands.get('command2', '')
-            command3 = commands.get('command3', '')
-            command4 = commands.get('command4', '')
-
-            self.command1.setText(command1)
-            self.command2.setText(command2)
-            self.command3.setText(command3)
-            self.command5.setText(command4)
-
     @pyqtSlot()
     def save_config(self):
         self.config['COMMANDS'] = {
@@ -88,7 +66,7 @@ class HandDetection(QMainWindow, Ui_HandDetection):
 
     # Override closeEvent, to intercept the window closing event
     # The window will be closed only if there is no check mark in the check box
-    def closeEevent(self, event):
+    def closeEvent(self, event):
         if self.minimize.isChecked():
             event.ignore()
             self.hide()
@@ -110,7 +88,7 @@ class HandDetectionMain(QObject):
         self.tensor = TensorflowDetector(standalone=False)
         self.executor = threading.Thread(name='executor', target=self.execute)
 
-        self.uihand = HandDetection(app)
+        self.uihand = HandDetection(app, self.stop)
         self.uihand.show()
 
         self.started = False
