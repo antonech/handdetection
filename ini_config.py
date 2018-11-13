@@ -17,7 +17,7 @@ class IniConfig(object):
     def save_config(self, data):
         assert isinstance(data, dict)
 
-        self.config['COMMANDS'] = copy(data)
+        self.config.update(copy(data))
 
         with open(self.file, 'w') as cfg:
             self.config.write(cfg)

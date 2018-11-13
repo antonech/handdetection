@@ -3,10 +3,9 @@ import threading
 import time
 
 from PyQt5.QtCore import pyqtSlot, QObject
-
-from handdetection import  TensorflowDetector, output_q
 from PyQt5.QtWidgets import QMainWindow, QSystemTrayIcon, QStyle, QAction, QMenu, QWidget
-
+from distutils.util import strtobool
+from handdetection import TensorflowDetector, output_q
 from ini_config import IniConfig
 from tray import Ui_HandDetection
 
@@ -52,35 +51,60 @@ class HandDetection(QMainWindow, Ui_HandDetection):
 
         self.init_config()
 
+        # show icon no need to check the config
+        self.tray_icon.show()
+
     def init_config(self):
         self.config.init_config()
+
         data = self.config.get()
+
+        acommand = {
+            'command1': self.command1,
+            'command2': self.command2,
+            'command3': self.command3,
+            'command4': self.command5
+        }
+
+        agui = {
+            'minimize': self.minimize,
+            'mouse_control': self.mouse,
+            'capture_stream': self.video
+        }
 
         commands = data.get("COMMANDS", {})
 
-        acommand = {'command1': self.command1,
-                    'command2': self.command2,
-                    'command3': self.command3,
-                    'command4': self.command5}
         for k, v in commands.items():
             command = acommand.get(k)
             if command:
                 command.setText(v)
 
+        gui = data.get("GUI", {})
+
+        for k, v in gui.items():
+            gui_check_box = agui.get(k)
+            if gui_check_box:
+                gui_check_box.setChecked(strtobool(v))
+
     @pyqtSlot()
     def save_config(self):
-        data = {'COMMANDS': {
+        data = {
+            'COMMANDS': {
                 'command1': self.command1.text(),
                 'command2': self.command2.text(),
                 'command3': self.command3.text(),
                 'command4': self.command5.text()
-                }
+            },
+            'GUI': {
+                'minimize': self.minimize.isChecked(),
+                'mouse_control': self.mouse.isChecked(),
+                'capture_stream': self.video.isChecked()
+            }
         }
 
         self.config.save_config(data)
 
     def show(self):
-        self.tray_icon.show()
         super().show()
 
     # Override closeEvent, to intercept the window closing event
@@ -110,7 +134,8 @@ class HandDetectionMain(QObject):
 
         self.config = IniConfig(CONFIG_FILE)
         self.uihand = HandDetection(app, stop_fn=self.stop, config=self.config)
-        self.uihand.show()
+        if not self.uihand.minimize.isChecked():
+            self.uihand.show()
 
         self.started = False
 
