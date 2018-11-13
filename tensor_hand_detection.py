@@ -163,5 +163,3 @@ if __name__ == '__main__':
     tfd = TensorflowDetector(score_thresh=0.9)
     tfd.start()
     tfd.join()
-    print('exit')
-

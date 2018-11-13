@@ -1,21 +1,18 @@
-import subprocess
-import threading
-import time
-
-from PyQt5.QtCore import pyqtSlot, QObject
-from PyQt5.QtWidgets import QMainWindow, QSystemTrayIcon, QStyle, QAction, QMenu, QWidget
 from distutils.util import strtobool
-from handdetection import TensorflowDetector, output_q
+
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QMainWindow, QStyle, QSystemTrayIcon, QAction, QMenu
+
 from ini_config import IniConfig
-from tray import Ui_HandDetection
+from hand_detection_window_form import Ui_HandDetection
 
 CONFIG_FILE = 'detection.ini'
 
 
-class HandDetection(QMainWindow, Ui_HandDetection):
+class HandDetectionWindow(QMainWindow, Ui_HandDetection):
 
     def __init__(self, app, **kwargs):
-        super(HandDetection, self).__init__()
+        super(HandDetectionWindow, self).__init__()
         self.setupUi(self)
         self.stop = kwargs.get('stop_fn', lambda: None)
         self.config = kwargs.get('config', IniConfig(CONFIG_FILE))
@@ -86,6 +83,9 @@ class HandDetection(QMainWindow, Ui_HandDetection):
             if gui_check_box:
                 gui_check_box.setChecked(strtobool(v))
 
+        if not self.minimize.isChecked():
+            self.show()
+
     @pyqtSlot()
     def save_config(self):
         data = {
@@ -121,89 +121,3 @@ class HandDetection(QMainWindow, Ui_HandDetection):
             )
         else:
             self.stop()
-
-
-class HandDetectionMain(QObject):
-    __lock = threading.RLock()
-
-    def __init__(self, app):
-        super(HandDetectionMain, self).__init__()
-
-        self.tensor = TensorflowDetector(standalone=False)
-        self.executor = threading.Thread(name='executor', target=self.execute)
-
-        self.config = IniConfig(CONFIG_FILE)
-        self.uihand = HandDetection(app, stop_fn=self.stop, config=self.config)
-        if not self.uihand.minimize.isChecked():
-            self.uihand.show()
-
-        self.started = False
-
-        self.inteval_commands_executor = dict()
-
-    def execute(self):
-
-        while self.started:
-            if output_q.qsize():
-                _, boxes, scores, classes = output_q.get()
-                for i, score in enumerate(scores):
-                    if score > self.tensor.score_thresh:
-                        acommand = classes[i]
-                        print(score, classes[i])
-                        self.execute_command(acommand)
-
-    def execute_command(self, num):
-        data = self.config.get().get('COMMANDS', {})
-
-        start = self.inteval_commands_executor.get(num, 0)
-        end = time.monotonic()
-
-        print('in execute command', end - start)
-
-        if start + 1 > end:
-            return
-
-        with self.__lock:
-            print('execute command', end-start)
-            acommands = {
-                1: data.get('command1'),
-                2: data.get('command2'),
-                3: data.get('command3'),
-                5: data.get('command4')
-            }
-            self.inteval_commands_executor[num] = time.monotonic()
-
-            command = acommands.get(num)
-            if command:
-                try:
-                    subprocess.call(command.split())
-                except FileNotFoundError:
-                    pass
-
-    def start(self):
-        if self.started:
-            return
-
-        self.started = True
-        self.executor.daemon = True
-
-        self.tensor.start()
-        self.executor.start()
-
-    def stop(self):
-
-        if not self.started:
-            return
-
-        self.tensor.stop()
-        self.started = False
-
-        self.executor.join()
-
-    def join(self):
-        try:
-            self.tensor.join()
-            self.executor.join()
-        except KeyboardInterrupt:
-            self.stop()
-

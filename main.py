@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication
-from handdetectionmain import HandDetectionMain
+from hand_detection_main import HandDetectionMain
 
 
 def main():
