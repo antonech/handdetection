@@ -23,4 +23,7 @@ class IniConfig(object):
             self.config.write(cfg)
 
     def get(self):
-        return self.config.
+        data = {}
+        for section in self.config.sections():
+            data[section] = dict(self.config[section].items())
+        return copy(data)
