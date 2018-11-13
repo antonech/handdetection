@@ -1,23 +1,25 @@
+import subprocess
 import threading
-
-from os.path import isfile
+import time
 
 from PyQt5.QtCore import pyqtSlot, QObject
 
 from handdetection import  TensorflowDetector, output_q
 from PyQt5.QtWidgets import QMainWindow, QSystemTrayIcon, QStyle, QAction, QMenu, QWidget
+
+from ini_config import IniConfig
 from tray import Ui_HandDetection
+
+CONFIG_FILE = 'detection.ini'
 
 
 class HandDetection(QMainWindow, Ui_HandDetection):
-
-    CONFIG_FILE = 'detection.ini'
 
     def __init__(self, app, **kwargs):
         super(HandDetection, self).__init__()
         self.setupUi(self)
         self.stop = kwargs.get('stop_fn', lambda: None)
-        self.config = kwargs.get('config', ConfigParser())
+        self.config = kwargs.get('config', IniConfig(CONFIG_FILE))
         icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
         self.setWindowIcon(icon)
 
@@ -48,17 +50,34 @@ class HandDetection(QMainWindow, Ui_HandDetection):
         self.app = app
         self.save_button.clicked.connect(self.save_config)
 
+        self.init_config()
+
+    def init_config(self):
+        self.config.init_config()
+        data = self.config.get()
+
+        commands = data.get("COMMANDS", {})
+
+        acommand = {'command1': self.command1,
+                    'command2': self.command2,
+                    'command3': self.command3,
+                    'command4': self.command5}
+        for k, v in commands.items():
+            command = acommand.get(k)
+            if command:
+                command.setText(v)
+
     @pyqtSlot()
     def save_config(self):
-        self.config['COMMANDS'] = {
+        data = {'COMMANDS': {
                 'command1': self.command1.text(),
                 'command2': self.command2.text(),
                 'command3': self.command3.text(),
                 'command4': self.command5.text()
-            }
+                }
+        }
 
-        with open(self.CONFIG_FILE, 'w') as cfg:
-            self.config.write(cfg)
+        self.config.save_config(data)
 
     def show(self):
         self.tray_icon.show()
@@ -81,6 +100,7 @@ class HandDetection(QMainWindow, Ui_HandDetection):
 
 
 class HandDetectionMain(QObject):
+    __lock = threading.RLock()
 
     def __init__(self, app):
         super(HandDetectionMain, self).__init__()
@@ -88,18 +108,52 @@ class HandDetectionMain(QObject):
         self.tensor = TensorflowDetector(standalone=False)
         self.executor = threading.Thread(name='executor', target=self.execute)
 
-        self.uihand = HandDetection(app, self.stop)
+        self.config = IniConfig(CONFIG_FILE)
+        self.uihand = HandDetection(app, stop_fn=self.stop, config=self.config)
         self.uihand.show()
 
         self.started = False
 
+        self.inteval_commands_executor = dict()
+
     def execute(self):
+
         while self.started:
             if output_q.qsize():
                 _, boxes, scores, classes = output_q.get()
                 for i, score in enumerate(scores):
                     if score > self.tensor.score_thresh:
+                        acommand = classes[i]
                         print(score, classes[i])
+                        self.execute_command(acommand)
+
+    def execute_command(self, num):
+        data = self.config.get().get('COMMANDS', {})
+
+        start = self.inteval_commands_executor.get(num, 0)
+        end = time.monotonic()
+
+        print('in execute command', end - start)
+
+        if start + 1 > end:
+            return
+
+        with self.__lock:
+            print('execute command', end-start)
+            acommands = {
+                1: data.get('command1'),
+                2: data.get('command2'),
+                3: data.get('command3'),
+                5: data.get('command4')
+            }
+            self.inteval_commands_executor[num] = time.monotonic()
+
+            command = acommands.get(num)
+            if command:
+                try:
+                    subprocess.call(command.split())
+                except FileNotFoundError:
+                    pass
 
     def start(self):
         if self.started:
