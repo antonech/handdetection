@@ -60,7 +60,9 @@ class HandDetectionMain(QObject):
             command = acommands.get(num)
             if command:
                 try:
-                    subprocess.call(command.split())
+                    to_run = command.split(';')
+                    for r in to_run:
+                         subprocess.call(r.split())
                 except FileNotFoundError:
                     pass
 
