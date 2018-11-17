@@ -1,7 +1,6 @@
 import subprocess
 import threading
 import time
-
 from PyQt5.QtCore import QObject
 
 from hand_detection_window import CONFIG_FILE, HandDetectionWindow
@@ -62,9 +61,15 @@ class HandDetectionMain(QObject):
                 try:
                     to_run = command.split(';')
                     for r in to_run:
-                         subprocess.call(r.split())
+                        subprocess.call(r.split())
                 except FileNotFoundError:
                     pass
+
+    @staticmethod
+    def get_mouse_position():
+        from Xlib import display
+        data = display.Display().screen().root.query_pointer()._data
+        return data["root_x"], data["root_y"]
 
     def start(self):
         if self.started:
@@ -87,9 +92,7 @@ class HandDetectionMain(QObject):
         self.executor.join()
 
     def join(self):
-        try:
-            self.tensor.join()
-            self.executor.join()
-        except KeyboardInterrupt:
-            self.stop()
+        self.stop()
+        self.tensor.join()
+        self.executor.join()
 
