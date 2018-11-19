@@ -34,10 +34,11 @@ class HandDetectionMain(QObject):
                 for i, score in enumerate(scores):
                     if score > self.tensor.score_thresh:
                         acommand = classes[i]
+                        box = boxes[i]
                         print(score, classes[i])
-                        self.execute_command(acommand)
+                        self.execute_command(acommand, box)
 
-    def execute_command(self, num):
+    def execute_command(self, num, box):
         config = self.config.get()
         data = config.get('COMMANDS', {})
         mouse_control = config.get('GUI', {}).get('mouse_control', False)
@@ -73,13 +74,29 @@ class HandDetectionMain(QObject):
                         pass
             else:
                 mouse_position = self.get_mouse_position()
+                width = 1920
+                height = 1080
+                x = width - box[1] * width
+                y = height - box[0] * height
                 print(mouse_position)
+                print(x, y)
+
+                self.move(x, y)
 
     @staticmethod
     def get_mouse_position():
         from Xlib import display
         data = display.Display().screen().root.query_pointer()._data
         return data["root_x"], data["root_y"]
+
+    @staticmethod
+    def move(x, y):
+        from Xlib.ext.xtest import fake_input
+        from Xlib import display
+        from Xlib import X
+        d = display.Display()
+        fake_input(d, X.MotionNotify, x=int(x), y=int(y))
+        d.sync()
 
     def start(self):
         if self.started:
