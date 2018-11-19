@@ -43,7 +43,6 @@ class HandDetectionWindow(QMainWindow, Ui_HandDetection):
         tray_icon.setContextMenu(tray_menu)
         self.tray_icon = tray_icon
 
-        self.app = app
         self.save_button.clicked.connect(self.save_config)
 
         self.init_config()

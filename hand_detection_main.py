@@ -20,6 +20,8 @@ class HandDetectionMain(QObject):
         self.config = IniConfig(CONFIG_FILE)
         self.uihand = HandDetectionWindow(app, stop_fn=self.stop, config=self.config)
 
+        app.aboutToQuit.connect(self.stop)
+
         self.inteval_commands_executor = dict()
 
         self.started = False
@@ -36,34 +38,42 @@ class HandDetectionMain(QObject):
                         self.execute_command(acommand)
 
     def execute_command(self, num):
-        data = self.config.get().get('COMMANDS', {})
+        config = self.config.get()
+        data = config.get('COMMANDS', {})
+        mouse_control = config.get('GUI', {}).get('mouse_control', False)
 
         start = self.inteval_commands_executor.get(num, 0)
         end = time.monotonic()
 
         print('in execute command', end - start)
 
-        if start + 1 > end:
+        if start + 1 > end and not mouse_control:
             return
 
         with self.__lock:
             print('execute command', end-start)
-            acommands = {
-                1: data.get('command1'),
-                2: data.get('command2'),
-                3: data.get('command3'),
-                5: data.get('command4')
-            }
-            self.inteval_commands_executor[num] = time.monotonic()
+            if not mouse_control:
 
-            command = acommands.get(num)
-            if command:
-                try:
-                    to_run = command.split(';')
-                    for r in to_run:
-                        subprocess.call(r.split())
-                except FileNotFoundError:
-                    pass
+                acommands = {
+                    1: data.get('command1'),
+                    2: data.get('command2'),
+                    3: data.get('command3'),
+                    5: data.get('command4')
+                }
+
+                self.inteval_commands_executor[num] = time.monotonic()
+
+                command = acommands.get(num)
+                if command:
+                    try:
+                        to_run = command.split(';')
+                        for r in to_run:
+                            subprocess.call(r.split())
+                    except FileNotFoundError:
+                        pass
+            else:
+                mouse_position = self.get_mouse_position()
+                print(mouse_position)
 
     @staticmethod
     def get_mouse_position():

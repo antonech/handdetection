@@ -9,11 +9,9 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 def main():
     app = QApplication(sys.argv)
     handdetection = HandDetectionMain(app)
-    try:
-        handdetection.start()
-        app.exec_()
-    except KeyboardInterrupt:
-        handdetection.join()
+
+    handdetection.start()
+    app.exec_()
 
 
 if __name__ == "__main__":
