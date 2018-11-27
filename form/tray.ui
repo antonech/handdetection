@@ -13,36 +13,6 @@
   <property name="windowTitle">
    <string>Hand Detection - Gesture Control</string>
   </property>
-  <widget class="QLineEdit" name="command1">
-   <property name="geometry">
-    <rect>
-     <x>60</x>
-     <y>54</y>
-     <width>170</width>
-     <height>25</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="command2">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>54</y>
-     <width>170</width>
-     <height>25</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="command3">
-   <property name="geometry">
-    <rect>
-     <x>60</x>
-     <y>109</y>
-     <width>170</width>
-     <height>25</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QLabel" name="img1">
    <property name="geometry">
     <rect>
@@ -105,16 +75,6 @@
    </property>
    <property name="text">
     <string/>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="command5">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>110</y>
-     <width>170</width>
-     <height>25</height>
-    </rect>
    </property>
   </widget>
   <widget class="QGroupBox" name="config">
@@ -234,9 +194,61 @@
     <string>Command:</string>
    </property>
   </widget>
+  <widget class="QComboBox" name="command1">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>50</y>
+     <width>171</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="command3">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>110</y>
+     <width>171</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="command2">
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>53</y>
+     <width>171</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="command5">
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>110</y>
+     <width>170</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
+  </widget>
  </widget>
  <resources>
-  <include location="../images.qrc"/>
+  <include location="../icons/images.qrc"/>
  </resources>
  <connections/>
 </ui>

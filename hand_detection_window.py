@@ -1,7 +1,7 @@
 from distutils.util import strtobool
 
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QMainWindow, QStyle, QSystemTrayIcon, QAction, QMenu
+from PyQt5.QtWidgets import QMainWindow, QStyle, QSystemTrayIcon, QAction, QMenu, QDesktopWidget
 
 from ini_config import IniConfig
 from hand_detection_window_form import Ui_HandDetection
@@ -65,15 +65,15 @@ class HandDetectionWindow(QMainWindow, Ui_HandDetection):
         agui = {
             'minimize': self.minimize,
             'mouse_control': self.mouse,
-            'capture_stream': self.video
+            'capture_stream': self.video,
         }
 
         commands = data.get("COMMANDS", {})
 
         for k, v in commands.items():
             command = acommand.get(k)
-            if command:
-                command.setText(v)
+            if command is not None:
+                command.setEditText(v)
 
         gui = data.get("GUI", {})
 
@@ -82,22 +82,32 @@ class HandDetectionWindow(QMainWindow, Ui_HandDetection):
             if gui_check_box:
                 gui_check_box.setChecked(strtobool(v))
 
+        x = gui.get('position_x')
+        y = gui.get('position_y')
+
+        if x and x.isdigit() and y and y.isdigit():
+            self.move(int(x), int(y))
+
         if not self.minimize.isChecked():
             self.show()
 
     @pyqtSlot()
     def save_config(self):
+        size = self.geometry()
+
         data = {
             'COMMANDS': {
-                'command1': self.command1.text(),
-                'command2': self.command2.text(),
-                'command3': self.command3.text(),
-                'command4': self.command5.text()
+                'command1': self.command1.currentText(),
+                'command2': self.command2.currentText(),
+                'command3': self.command3.currentText(),
+                'command4': self.command5.currentText()
             },
             'GUI': {
                 'minimize': self.minimize.isChecked(),
                 'mouse_control': self.mouse.isChecked(),
-                'capture_stream': self.video.isChecked()
+                'capture_stream': self.video.isChecked(),
+                'position_x': size.left(),
+                'position_y': size.top()
             }
         }
 

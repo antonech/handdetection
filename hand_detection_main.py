@@ -48,12 +48,12 @@ class HandDetectionMain(QObject):
 
         print('in execute command', end - start)
 
-        if start + 1 > end and not mouse_control:
+        if start + 1 > end and mouse_control == 'False':
             return
 
         with self.__lock:
             print('execute command', end-start)
-            if not mouse_control:
+            if mouse_control == 'False':
 
                 acommands = {
                     1: data.get('command1'),
@@ -73,15 +73,24 @@ class HandDetectionMain(QObject):
                     except FileNotFoundError:
                         pass
             else:
-                mouse_position = self.get_mouse_position()
+                x_o, y_o = self.get_mouse_position()
                 width = 1920
                 height = 1080
-                x = width - box[1] * width
-                y = height - box[0] * height
-                print(mouse_position)
-                print(x, y)
+                x = box[1] * width
+                y = box[0] * height
 
-                self.move(x, y)
+                print(x, y)
+                if width/2 < x:
+                    x_o += 5
+                else:
+                    x_o -= 5
+
+                if height/2 < y:
+                    y_o += 5
+                else:
+                    y_o -= 5
+
+                self.move(x_o, y_o)
 
     @staticmethod
     def get_mouse_position():

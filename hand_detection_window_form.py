@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'tray.ui'
+# Form implementation generated from reading ui file 'form/tray.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -12,15 +12,6 @@ class Ui_HandDetection(object):
     def setupUi(self, HandDetection):
         HandDetection.setObjectName("HandDetection")
         HandDetection.resize(480, 320)
-        self.command1 = QtWidgets.QLineEdit(HandDetection)
-        self.command1.setGeometry(QtCore.QRect(60, 54, 170, 25))
-        self.command1.setObjectName("command1")
-        self.command2 = QtWidgets.QLineEdit(HandDetection)
-        self.command2.setGeometry(QtCore.QRect(300, 54, 170, 25))
-        self.command2.setObjectName("command2")
-        self.command3 = QtWidgets.QLineEdit(HandDetection)
-        self.command3.setGeometry(QtCore.QRect(60, 109, 170, 25))
-        self.command3.setObjectName("command3")
         self.img1 = QtWidgets.QLabel(HandDetection)
         self.img1.setGeometry(QtCore.QRect(-10, 27, 81, 51))
         self.img1.setStyleSheet("image: url(:/icons/image1.jpg);")
@@ -41,9 +32,6 @@ class Ui_HandDetection(object):
         self.img4.setStyleSheet("image: url(:/icons/image5.jpg);")
         self.img4.setText("")
         self.img4.setObjectName("img4")
-        self.command5 = QtWidgets.QLineEdit(HandDetection)
-        self.command5.setGeometry(QtCore.QRect(300, 110, 170, 25))
-        self.command5.setObjectName("command5")
         self.config = QtWidgets.QGroupBox(HandDetection)
         self.config.setGeometry(QtCore.QRect(10, 180, 461, 121))
         self.config.setObjectName("config")
@@ -71,6 +59,22 @@ class Ui_HandDetection(object):
         self.cmmandlabel4 = QtWidgets.QLabel(HandDetection)
         self.cmmandlabel4.setGeometry(QtCore.QRect(300, 90, 81, 17))
         self.cmmandlabel4.setObjectName("cmmandlabel4")
+        self.command1 = QtWidgets.QComboBox(HandDetection)
+        self.command1.setGeometry(QtCore.QRect(60, 50, 171, 25))
+        self.command1.setEditable(True)
+        self.command1.setObjectName("command1")
+        self.command3 = QtWidgets.QComboBox(HandDetection)
+        self.command3.setGeometry(QtCore.QRect(60, 110, 171, 25))
+        self.command3.setEditable(True)
+        self.command3.setObjectName("command3")
+        self.command2 = QtWidgets.QComboBox(HandDetection)
+        self.command2.setGeometry(QtCore.QRect(300, 53, 171, 25))
+        self.command2.setEditable(True)
+        self.command2.setObjectName("command2")
+        self.command5 = QtWidgets.QComboBox(HandDetection)
+        self.command5.setGeometry(QtCore.QRect(300, 110, 170, 25))
+        self.command5.setEditable(True)
+        self.command5.setObjectName("command5")
 
         self.retranslateUi(HandDetection)
         QtCore.QMetaObject.connectSlotsByName(HandDetection)
