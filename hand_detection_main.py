@@ -26,8 +26,12 @@ class HandDetectionMain(QObject):
 
         self.started = False
 
-    def execute(self):
 
+    def execute(self):
+        """
+        Thread executor of predicted command
+        :return:
+        """
         while self.started:
             if output_q.qsize():
                 _, boxes, scores, classes = output_q.get()
@@ -35,36 +39,56 @@ class HandDetectionMain(QObject):
                     if score > self.tensor.score_thresh:
                         acommand = classes[i]
                         box = boxes[i]
-                        print(score, classes[i])
                         self.execute_command(acommand, box)
 
-    def execute_command(self, num, box):
+    def get_command(self, num):
         config = self.config.get()
         data = config.get('COMMANDS', {})
+        combo_texts = config.get('COMBOBOX_TEXT', {})
+        combo_commands = config.get('COMBOBOX', {})
+
         mouse_control = config.get('GUI', {}).get('mouse_control', False)
 
-        start = self.inteval_commands_executor.get(num, 0)
-        end = time.monotonic()
+        if mouse_control != 'False':
+            return 'mouse_control'
 
-        print('in execute command', end - start)
-
-        if start + 1 > end and mouse_control == 'False':
-            return
-
-        with self.__lock:
-            print('execute command', end-start)
-            if mouse_control == 'False':
-
-                acommands = {
+        acommands = {
                     1: data.get('command1'),
                     2: data.get('command2'),
                     3: data.get('command3'),
                     5: data.get('command4')
                 }
 
+        command = acommands.get(num)
+
+        if command in combo_texts.values():
+            idx = dict((v, k) for k, v in combo_texts.items())[command]
+            command = combo_commands[idx]
+
+        return command
+
+    def execute_command(self, num, box):
+        """
+        Executes command after prediction
+        :param num: Command number
+        :param box: Border of the predicted figure
+        :return:
+        """
+
+        start = self.inteval_commands_executor.get(num, 0)
+        end = time.monotonic()
+
+        command = self.get_command(num)
+        # Wait 1 sec between executions
+        if start + 1 > end and command != 'mouse_control':
+            return
+
+        with self.__lock:
+
+            if command != 'mouse_control':
+
                 self.inteval_commands_executor[num] = time.monotonic()
 
-                command = acommands.get(num)
                 if command:
                     try:
                         to_run = command.split(';')

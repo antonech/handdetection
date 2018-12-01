@@ -68,6 +68,13 @@ class HandDetectionWindow(QMainWindow, Ui_HandDetection):
             'capture_stream': self.video,
         }
 
+        combobox_commands = data.get('COMBOBOX_TEXT', {})
+        texts = data.get('COMBOBOX_TEXT', {})
+
+        for c in acommand.values():
+            for idx, txt in texts.items():
+                c.addItem(txt, combobox_commands.get(idx, ''))
+
         commands = data.get("COMMANDS", {})
 
         for k, v in commands.items():
