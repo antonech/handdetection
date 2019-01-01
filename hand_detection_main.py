@@ -1,7 +1,9 @@
 import subprocess
 import threading
 import time
+import cv2
 from PyQt5.QtCore import QObject
+from PyQt5.QtGui import QImage
 
 from hand_detection_window import CONFIG_FILE, HandDetectionWindow
 from tensor_hand_detection import TensorflowDetector, output_q
@@ -14,7 +16,7 @@ class HandDetectionMain(QObject):
     def __init__(self, app):
         super(HandDetectionMain, self).__init__()
 
-        self.tensor = TensorflowDetector(standalone=False)
+        self.tensor = TensorflowDetector(standalone=False, score_thresh=0.88)
         self.executor = threading.Thread(name='executor', target=self.execute)
 
         self.config = IniConfig(CONFIG_FILE)
@@ -26,7 +28,6 @@ class HandDetectionMain(QObject):
 
         self.started = False
 
-
     def execute(self):
         """
         Thread executor of predicted command
@@ -34,12 +35,12 @@ class HandDetectionMain(QObject):
         """
         while self.started:
             if output_q.qsize():
-                _, boxes, scores, classes = output_q.get()
+                img, boxes, scores, classes = output_q.get()
                 for i, score in enumerate(scores):
                     if score > self.tensor.score_thresh:
                         acommand = classes[i]
                         box = boxes[i]
-                        self.execute_command(acommand, box)
+                        self.execute_command(acommand, box, img)
 
     def get_command(self, num):
         config = self.config.get()
@@ -67,7 +68,7 @@ class HandDetectionMain(QObject):
 
         return command
 
-    def execute_command(self, num, box):
+    def execute_command(self, num, box, img):
         """
         Executes command after prediction
         :param num: Command number
@@ -75,27 +76,42 @@ class HandDetectionMain(QObject):
         :return:
         """
 
-        start = self.inteval_commands_executor.get(num, 0)
+        data = self.inteval_commands_executor.get(num, {})
+        start = data.get('time', 0)
+        count = data.get('count', 0)
         end = time.monotonic()
 
         command = self.get_command(num)
-        # Wait 1 sec between executions
-        if start + 1 > end and command != 'mouse_control':
+        # Wait 0.5 sec between executions
+        if start + 0.5 > end and count < 5 and command != 'mouse_control':
+            count += 1
+            self.inteval_commands_executor = {
+                num: {
+                    'time': start,
+                    'count': count
+                }
+            }
+            print(f'time: {start} {num} {count}')
             return
+
+        self.plot(img)
 
         with self.__lock:
 
             if command != 'mouse_control':
 
-                self.inteval_commands_executor[num] = time.monotonic()
+                self.inteval_commands_executor[num] = {
+                    'time': time.monotonic(),
+                    'count': 0
+                }
 
-                if command:
+            if command:
                     try:
                         to_run = command.split(';')
                         for r in to_run:
-                            subprocess.call(r.split())
+                          subprocess.check_output(r.split())
                     except FileNotFoundError:
-                        pass
+                        print('Error')
             else:
                 x_o, y_o = self.get_mouse_position()
                 width = 1920
@@ -115,6 +131,10 @@ class HandDetectionMain(QObject):
                     y_o -= 5
 
                 self.move(x_o, y_o)
+
+    def plot(self, img):
+        image = QImage(img, img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
+        self.uihand.tray_icon.show_image(image)
 
     @staticmethod
     def get_mouse_position():
@@ -155,4 +175,5 @@ class HandDetectionMain(QObject):
         self.stop()
         self.tensor.join()
         self.executor.join()
+
 

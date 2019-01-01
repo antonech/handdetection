@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QMainWindow, QStyle, QSystemTrayIcon, QAction, QMenu
 
 from ini_config import IniConfig
 from hand_detection_window_form import Ui_HandDetection
+from tray_icon import SystemTrayIcon
 
 CONFIG_FILE = 'detection.ini'
 
@@ -20,7 +21,7 @@ class HandDetectionWindow(QMainWindow, Ui_HandDetection):
         self.setWindowIcon(icon)
 
         # Init QSystemTrayIcon
-        tray_icon = QSystemTrayIcon(self)
+        tray_icon = SystemTrayIcon(self)
         tray_icon.setIcon(icon)
 
         '''
@@ -130,7 +131,7 @@ class HandDetectionWindow(QMainWindow, Ui_HandDetection):
             event.ignore()
             self.hide()
             self.tray_icon.showMessage(
-                "Tray Program",
+                "Hands Detection",
                 "Application was minimized to Tray",
                 QSystemTrayIcon.Information,
                 2000
