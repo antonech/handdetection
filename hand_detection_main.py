@@ -1,13 +1,19 @@
 import subprocess
 import threading
 import time
-import cv2
 from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QImage
-
+from enum import Flag, auto
 from hand_detection_window import CONFIG_FILE, HandDetectionWindow
 from tensor_hand_detection import TensorflowDetector, output_q
 from ini_config import IniConfig
+
+
+class CommandTypes(Flag):
+    NONE = 0
+    COMMAND = auto()
+    MOUSE = auto()
+    CAPTURE_VIDEO = auto()
 
 
 class HandDetectionMain(QObject):
@@ -48,10 +54,12 @@ class HandDetectionMain(QObject):
         combo_texts = config.get('COMBOBOX_TEXT', {})
         combo_commands = config.get('COMBOBOX', {})
 
-        mouse_control = config.get('GUI', {}).get('mouse_control', False)
-
-        if mouse_control != 'False':
-            return 'mouse_control'
+        gui = config.get('GUI', {})
+        mouse_control = CommandTypes.MOUSE if gui.get('mouse_control', 'False') == 'True' else CommandTypes.NONE
+        capture_video = CommandTypes.CAPTURE_VIDEO if gui.get('capture_stream', 'False') == 'True' \
+            else CommandTypes.NONE
+        if mouse_control & CommandTypes.MOUSE:
+            return '', mouse_control | capture_video
 
         acommands = {
                     1: data.get('command1'),
@@ -66,7 +74,7 @@ class HandDetectionMain(QObject):
             idx = dict((v, k) for k, v in combo_texts.items())[command]
             command = combo_commands[idx]
 
-        return command
+        return command, CommandTypes.COMMAND | capture_video
 
     def execute_command(self, num, box, img):
         """
@@ -81,9 +89,9 @@ class HandDetectionMain(QObject):
         count = data.get('count', 0)
         end = time.monotonic()
 
-        command = self.get_command(num)
+        command, command_type = self.get_command(num)
         # Wait 0.5 sec between executions
-        if start + 0.5 > end and count < 5 and command != 'mouse_control':
+        if start + 0.5 > end and count < 5 and not command_type & CommandTypes.MOUSE:
             count += 1
             self.inteval_commands_executor = {
                 num: {
@@ -94,7 +102,8 @@ class HandDetectionMain(QObject):
             print(f'time: {start} {num} {count}')
             return
 
-        self.plot(img)
+        if command_type & CommandTypes.CAPTURE_VIDEO:
+            self.plot(img)
 
         with self.__lock:
 
@@ -109,7 +118,7 @@ class HandDetectionMain(QObject):
                     try:
                         to_run = command.split(';')
                         for r in to_run:
-                          subprocess.check_output(r.split())
+                            subprocess.check_output(r.split())
                     except FileNotFoundError:
                         print('Error')
             else:
