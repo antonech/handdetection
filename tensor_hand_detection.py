@@ -1,3 +1,5 @@
+import time
+
 import cv2
 import threading
 import signal
@@ -52,7 +54,6 @@ class TensorflowDetector(object):
 
         with self.detection_graph.as_default():
             od_graph_def = tf.GraphDef()
-            # Works up to here.
             with tf.gfile.GFile(self.graph_path, 'rb') as fid:
                 serialized_graph = fid.read()
                 od_graph_def.ParseFromString(serialized_graph)
@@ -126,8 +127,11 @@ class TensorflowDetector(object):
         while self.started:
             if self.img_queue.qsize():
                 img = self.img_queue.get()
+                start = time.monotonic()
                 boxes, scores, classes = self.get_classification(img)
+                end = time.monotonic()
                 if self.standalone:
+                    print(end - start, end=' ')
                     img = self.draw_box(img,  boxes, scores, classes)
                 self.output_q.put((img, boxes, scores, classes))
 
@@ -160,6 +164,6 @@ class TensorflowDetector(object):
 
 
 if __name__ == '__main__':
-    tfd = TensorflowDetector(score_thresh=0.9)
+    tfd = TensorflowDetector(score_thresh=0.9, src=1)
     tfd.start()
     tfd.join()

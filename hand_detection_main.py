@@ -22,11 +22,12 @@ class HandDetectionMain(QObject):
     def __init__(self, app):
         super(HandDetectionMain, self).__init__()
 
-        self.tensor = TensorflowDetector(standalone=False, score_thresh=0.88)
-        self.executor = threading.Thread(name='executor', target=self.execute)
-
         self.config = IniConfig(CONFIG_FILE)
+
         self.uihand = HandDetectionWindow(app, stop_fn=self.stop, config=self.config)
+
+        self.tensor = TensorflowDetector(standalone=False, score_thresh=0.88, src=self.config.get_video_src())
+        self.executor = threading.Thread(name='executor', target=self.execute)
 
         app.aboutToQuit.connect(self.stop)
 
@@ -49,12 +50,11 @@ class HandDetectionMain(QObject):
                         self.execute_command(acommand, box, img)
 
     def get_command(self, num):
-        config = self.config.get()
-        data = config.get('COMMANDS', {})
-        combo_texts = config.get('COMBOBOX_TEXT', {})
-        combo_commands = config.get('COMBOBOX', {})
+        data = self.config.get_commands()
+        combo_texts = self.config.get_combobox_texts()
+        combo_commands = self.config.get_combobox()
+        gui = self.config.get_gui()
 
-        gui = config.get('GUI', {})
         mouse_control = CommandTypes.MOUSE if gui.get('mouse_control', 'False') == 'True' else CommandTypes.NONE
         capture_video = CommandTypes.CAPTURE_VIDEO if gui.get('capture_stream', 'False') == 'True' \
             else CommandTypes.NONE
@@ -81,6 +81,7 @@ class HandDetectionMain(QObject):
         Executes command after prediction
         :param num: Command number
         :param box: Border of the predicted figure
+        :param img: Image to show
         :return:
         """
 
@@ -99,7 +100,6 @@ class HandDetectionMain(QObject):
                     'count': count
                 }
             }
-            print(f'time: {start} {num} {count}')
             return
 
         if command_type & CommandTypes.CAPTURE_VIDEO:
@@ -107,20 +107,19 @@ class HandDetectionMain(QObject):
 
         with self.__lock:
 
-            if command != 'mouse_control':
+            if not command_type & CommandTypes.MOUSE:
 
                 self.inteval_commands_executor[num] = {
                     'time': time.monotonic(),
                     'count': 0
                 }
 
-            if command:
-                    try:
-                        to_run = command.split(';')
-                        for r in to_run:
-                            subprocess.check_output(r.split())
-                    except FileNotFoundError:
-                        print('Error')
+                try:
+                    to_run = command.split(';')
+                    for r in to_run:
+                        subprocess.check_output(r.split())
+                except FileNotFoundError:
+                    print('Error')
             else:
                 x_o, y_o = self.get_mouse_position()
                 width = 1920
@@ -128,7 +127,6 @@ class HandDetectionMain(QObject):
                 x = box[1] * width
                 y = box[0] * height
 
-                print(x, y)
                 if width/2 < x:
                     x_o += 5
                 else:
