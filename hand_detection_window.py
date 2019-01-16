@@ -54,8 +54,6 @@ class HandDetectionWindow(QMainWindow, Ui_HandDetection):
     def init_config(self):
         self.config.init_config()
 
-        data = self.config.get()
-
         acommand = {
             'command1': self.command1,
             'command2': self.command2,
@@ -69,21 +67,21 @@ class HandDetectionWindow(QMainWindow, Ui_HandDetection):
             'capture_stream': self.video,
         }
 
-        combobox_commands = data.get('COMBOBOX_TEXT', {})
-        texts = data.get('COMBOBOX_TEXT', {})
+        combobox_commands = self.config.get_combobox()
+        texts = self.config.get_combobox_texts()
 
         for c in acommand.values():
             for idx, txt in texts.items():
                 c.addItem(txt, combobox_commands.get(idx, ''))
 
-        commands = data.get("COMMANDS", {})
+        commands = self.config.get_commands()
 
         for k, v in commands.items():
             command = acommand.get(k)
             if command is not None:
                 command.setEditText(v)
 
-        gui = data.get("GUI", {})
+        gui = self.config.get_gui()
 
         for k, v in gui.items():
             gui_check_box = agui.get(k)

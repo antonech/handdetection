@@ -1,3 +1,4 @@
+import cv2
 import subprocess
 import threading
 import time
@@ -50,6 +51,11 @@ class HandDetectionMain(QObject):
                         self.execute_command(acommand, box, img)
 
     def get_command(self, num):
+        """
+        Read command from ini config
+        :param num: Combobox number 1,2,3,5 (Represents gesture index)
+        :return:  Command
+        """
         data = self.config.get_commands()
         combo_texts = self.config.get_combobox_texts()
         combo_commands = self.config.get_combobox()
@@ -94,16 +100,14 @@ class HandDetectionMain(QObject):
         # Wait 0.5 sec between executions
         if start + 0.5 > end and count < 5 and not command_type & CommandTypes.MOUSE:
             count += 1
-            self.inteval_commands_executor = {
-                num: {
-                    'time': start,
-                    'count': count
-                }
+            self.inteval_commands_executor[num] = {
+               'time': start,
+               'count': count
             }
             return
 
         if command_type & CommandTypes.CAPTURE_VIDEO:
-            self.plot(img)
+            self.plot(img, box)
 
         with self.__lock:
 
@@ -139,7 +143,17 @@ class HandDetectionMain(QObject):
 
                 self.move(x_o, y_o)
 
-    def plot(self, img):
+    def plot(self, img, box):
+        height = img.shape[0]
+        width = img.shape[1]
+
+        (left, right, top, bottom) = (box[1] * width, box[3] * width,
+                                      box[0] * height, box[2] * height)
+        p1 = (int(left), int(top))
+        p2 = (int(right), int(bottom))
+
+        cv2.rectangle(img, p1, p2, (77, 255, 9), 3, 3)
+
         image = QImage(img, img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
         self.uihand.tray_icon.show_image(image)
 

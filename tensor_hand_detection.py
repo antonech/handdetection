@@ -95,7 +95,7 @@ class TensorflowDetector(object):
 
         for i, score in enumerate(scores):
             if score > self.score_thresh:
-                print(score, classes[i])
+                print(classes[i])
                 (left, right, top, bottom) = (boxes[i][1] * width, boxes[i][3] * width,
                                               boxes[i][0] * height, boxes[i][2] * height)
                 p1 = (int(left), int(top))
@@ -164,6 +164,13 @@ class TensorflowDetector(object):
 
 
 if __name__ == '__main__':
-    tfd = TensorflowDetector(score_thresh=0.9, src=1)
+    import argparse
+    parser = argparse.ArgumentParser(description='Console arguments')
+    parser.add_argument('--src', type=int, default=0, help='select video source')
+    parser.add_argument('--threshhold', type=float, default=0.9, help='threshhold between 0.0-1.0')
+    parser.add_argument('--graph_path', type=str, default=TensorflowDetector.PATH_TO_MODEL, help='path to model')
+    args = parser.parse_args()
+
+    tfd = TensorflowDetector(score_thresh=args.threshhold, src=args.src, graph_path=args.graph_path)
     tfd.start()
     tfd.join()
